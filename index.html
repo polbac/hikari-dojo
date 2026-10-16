@@ -39,8 +39,11 @@
     </a>
 
     <div class="nav-actions">
-      <button type="button" class="btn-explore-3d" id="btn-explore-mode" title="Explorar el Dojo en 3D">
-        Explorar Dojo
+      <button type="button" class="btn-explore-3d" id="btn-explore-mode" title="Explorar el Dojo en 3D" aria-label="Explorar el Dojo en 3D" aria-pressed="false">
+        <svg class="explore-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+          <path d="M12 3.2 20 7.5v9L12 20.8 4 16.5v-9L12 3.2Z" />
+          <path d="M12 3.2v17.6M4 7.5l8 4.3 8-4.3" />
+        </svg>
       </button>
       <button type="button" class="btn-music" id="btn-music" title="Música de fondo" aria-label="Activar o pausar música" aria-pressed="false">
         <svg class="music-wave" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -92,7 +95,6 @@
 
   <!-- DOCK FLOTANTE DE CÁMARAS 3D (solo en Explorar Dojo) -->
   <nav class="controls-3d-dock" aria-label="Controles de cámara 3D">
-    <span class="dock-label">Vista 3D</span>
     <button type="button" class="cam-btn active" data-cam="general">Vista General</button>
     <button type="button" class="cam-btn" data-cam="shinshukan">Logo Shinshukan 3D</button>
     <button type="button" class="cam-btn" data-cam="hikari">Logo Hikari 3D</button>
@@ -242,8 +244,8 @@
         </div>
       </div>
 
-      <!-- Carrusel full-width: scroll horizontal + drag -->
-      <div class="events-gallery-grid" id="events-gallery-grid" aria-label="Galería de fotos — arrastrá para navegar">
+      <!-- Carrusel infinito: auto RTL + drag con inercia -->
+      <div class="events-gallery-grid" id="events-gallery-grid" aria-label="Galería de fotos — se mueve sola; pausá con el mouse o arrastrá">
 
         <!-- 1. PRÁCTICA CONJUNTA EN BETSUBARA DOJO (FOTO GRUPAL TATAMI) -->
         <article class="event-photo-card featured" data-category="encuentros">
@@ -497,12 +499,12 @@
                 <span class="ig-location-tag">Karate Do - Shorin Ryu Shinshukan - Hikari Dojo</span>
               </div>
             </div>
-            <a href="https://wa.me/5491122636846?text=Hola%20Sensei%20Gustavo%20Talavera%2C%20quisiera%20consultar%20por%20las%20clases%20de%20Karate%20Do." target="_blank" rel="noopener" class="pill-badge">
+            <a href="https://wa.me/5491122636846?text=Hola%20Sensei%20Gustavo%20Talavera%2C%20quisiera%20consultar%20por%20las%20clases%20de%20Karate%20Do." target="_blank" rel="noopener" class="btn-secondary ig-wa-btn">
               WhatsApp ↗
             </a>
           </div>
 
-          <div class="ig-image-wrapper" style="aspect-ratio: 4 / 5; background: #fff;">
+          <div class="ig-image-wrapper" style="aspect-ratio: 4 / 5; background: #faf6ee;">
             <img src="assets/ig-post.jpg" alt="Publicación oficial de Instagram de Karate Do - Shorin Ryu Shinshukan - Hikari Dojo" style="object-fit: contain;" />
           </div>
 
@@ -533,17 +535,17 @@
           </p>
 
           <form class="contact-form" id="trial-class-form">
-            <div>
+            <div class="form-field">
               <input type="text" id="input-nombre" class="form-input" placeholder="Tu nombre y apellido" required />
             </div>
-            <div>
+            <div class="form-field">
               <select id="input-dia" class="form-input" aria-label="Elegir día de clase">
                 <option value="Martes">Martes (21:00 a 22:30 hs)</option>
                 <option value="Viernes">Viernes (21:00 a 22:30 hs)</option>
                 <option value="Martes y Viernes">Martes y Viernes (21:00 a 22:30 hs)</option>
               </select>
             </div>
-            <div class="full-width">
+            <div class="form-field full-width">
               <select id="input-nivel" class="form-input" aria-label="Nivel de experiencia">
                 <option value="Principiante (Sin experiencia previa)">Principiante (Sin experiencia previa)</option>
                 <option value="Con experiencia previa en Karate / Artes Marciales">Con experiencia previa en Karate / Artes Marciales</option>

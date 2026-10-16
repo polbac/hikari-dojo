@@ -43,7 +43,7 @@
 
     initScene() {
       this.scene = new THREE.Scene();
-      this.scene.background = new THREE.Color(0xffffff);
+      this.scene.background = new THREE.Color(0xfaf6ee);
 
       this.camera = new THREE.PerspectiveCamera(
         46,
@@ -611,7 +611,7 @@
         this.shojiMaterial.emissive.setHex(0xdde5b6);
         this.shojiMaterial.emissiveIntensity = 0.4;
       } else {
-        this.scene.background.setHex(0xffffff);
+        this.scene.background.setHex(0xfaf6ee);
         this.ambientLight.color.setHex(0xffffff);
         this.ambientLight.intensity = 0.95;
         this.dojoTopLight.color.setHex(0xa98467);

@@ -85,11 +85,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const exploreBtn = document.getElementById('btn-explore-mode');
   function setExploreMode(active) {
     document.body.classList.toggle('explore-mode', active);
-    if (exploreBtn) exploreBtn.textContent = active ? 'Volver' : 'Explorar Dojo';
+    if (exploreBtn) {
+      exploreBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      exploreBtn.title = active ? 'Salir del modo 3D' : 'Explorar el Dojo en 3D';
+      exploreBtn.setAttribute(
+        'aria-label',
+        active ? 'Salir del modo 3D' : 'Explorar el Dojo en 3D'
+      );
+    }
     if (dojo3D) {
       dojo3D.setCameraPreset(active ? 'orbit' : 'general');
       if (active) {
-        dojo3D.scene.background.setHex(0xffffff);
+        dojo3D.scene.background.setHex(0xfaf6ee);
       }
     }
   }
@@ -275,112 +282,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 8. Filtros de Galería + scroll horizontal con drag + Lightbox
+  // 8. Galería infinita (auto RTL + pausa hover + drag con inercia) + filtros + Lightbox
   const filterChips = document.querySelectorAll('.filter-chip[data-filter]');
-  const galleryCards = document.querySelectorAll('.event-photo-card[data-category]');
-  const galleryTrack = document.getElementById('events-gallery-grid');
-
-  filterChips.forEach((chip) => {
-    chip.addEventListener('click', () => {
-      filterChips.forEach((c) => c.classList.remove('active'));
-      chip.classList.add('active');
-      const filterValue = chip.getAttribute('data-filter');
-
-      galleryCards.forEach((card) => {
-        const category = card.getAttribute('data-category');
-        const show = filterValue === 'todos' || category === filterValue;
-        card.classList.toggle('hidden-card', !show);
-      });
-    });
-  });
-
-  if (galleryTrack) {
-    let isDragging = false;
-    let didDrag = false;
-    let startX = 0;
-    let scrollStart = 0;
-    let lastX = 0;
-    let lastTime = 0;
-    let velocity = 0;
-    let momentumId = 0;
-
-    const stopMomentum = () => {
-      if (momentumId) {
-        cancelAnimationFrame(momentumId);
-        momentumId = 0;
-      }
-    };
-
-    const runMomentum = () => {
-      stopMomentum();
-      const step = () => {
-        if (Math.abs(velocity) < 0.15) {
-          velocity = 0;
-          momentumId = 0;
-          return;
-        }
-        galleryTrack.scrollLeft -= velocity;
-        velocity *= 0.94;
-        momentumId = requestAnimationFrame(step);
-      };
-      momentumId = requestAnimationFrame(step);
-    };
-
-    const onPointerDown = (e) => {
-      if (e.pointerType === 'touch') return;
-      stopMomentum();
-      isDragging = true;
-      didDrag = false;
-      startX = lastX = e.clientX;
-      lastTime = performance.now();
-      scrollStart = galleryTrack.scrollLeft;
-      velocity = 0;
-      galleryTrack.classList.add('is-dragging');
-      galleryTrack.setPointerCapture?.(e.pointerId);
-    };
-
-    const onPointerMove = (e) => {
-      if (!isDragging) return;
-      const now = performance.now();
-      const dx = e.clientX - startX;
-      const frameDx = e.clientX - lastX;
-      const dt = Math.max(now - lastTime, 1);
-      if (Math.abs(dx) > 4) didDrag = true;
-      galleryTrack.scrollLeft = scrollStart - dx;
-      velocity = (frameDx / dt) * 16;
-      lastX = e.clientX;
-      lastTime = now;
-    };
-
-    const onPointerUp = (e) => {
-      if (!isDragging) return;
-      isDragging = false;
-      galleryTrack.classList.remove('is-dragging');
-      try {
-        galleryTrack.releasePointerCapture?.(e.pointerId);
-      } catch {
-        /* ignore */
-      }
-      if (didDrag) runMomentum();
-    };
-
-    galleryTrack.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('pointercancel', onPointerUp);
-
-    galleryTrack.addEventListener(
-      'click',
-      (e) => {
-        if (didDrag) {
-          e.preventDefault();
-          e.stopPropagation();
-          didDrag = false;
-        }
-      },
-      true
-    );
-  }
+  const galleryViewport = document.getElementById('events-gallery-grid');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const lightbox = document.getElementById('gallery-lightbox');
   const lightboxImg = document.getElementById('lightbox-img');
@@ -405,16 +310,6 @@ document.addEventListener('DOMContentLoaded', () => {
     lightbox.setAttribute('aria-hidden', 'true');
   }
 
-  document.querySelectorAll('.event-img-box[data-lightbox-src]').forEach((box) => {
-    box.addEventListener('click', () => {
-      openLightbox(
-        box.getAttribute('data-lightbox-src'),
-        box.getAttribute('data-lightbox-title'),
-        box.getAttribute('data-lightbox-desc')
-      );
-    });
-  });
-
   if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
   if (lightboxBackdrop) lightboxBackdrop.addEventListener('click', closeLightbox);
 
@@ -422,6 +317,268 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape' && lightbox && lightbox.classList.contains('open')) {
       closeLightbox();
     }
+  });
+
+  function initGalleryMarquee(viewport) {
+    let track = viewport.querySelector('.events-gallery-track');
+    if (!track) {
+      track = document.createElement('div');
+      track.className = 'events-gallery-track';
+      while (viewport.firstChild) track.appendChild(viewport.firstChild);
+      viewport.appendChild(track);
+    }
+
+    const originals = Array.from(
+      track.querySelectorAll('.event-photo-card[data-category]:not([data-marquee-clone])')
+    );
+
+    let offset = 0;
+    let loopWidth = 0;
+    let velocity = 0;
+    let isStatic = false;
+    let hovering = false;
+    let isDragging = false;
+    let didDrag = false;
+    let startX = 0;
+    let offsetStart = 0;
+    let lastX = 0;
+    let lastTime = 0;
+    let rafId = 0;
+    let lastTick = 0;
+
+    const AUTO_SPEED = 0.55; // px por frame (~60fps) → derecha a izquierda
+
+    const getVisible = () =>
+      originals.filter((c) => !c.classList.contains('hidden-card'));
+
+    const getGap = () => {
+      const styles = getComputedStyle(track);
+      return parseFloat(styles.columnGap || styles.gap) || 0;
+    };
+
+    const measureContentWidth = (visible) => {
+      if (!visible.length) return 0;
+      const gap = getGap();
+      return visible.reduce((sum, card, i) => {
+        return sum + card.offsetWidth + (i < visible.length - 1 ? gap : 0);
+      }, 0);
+    };
+
+    const applyTransform = () => {
+      if (isStatic) {
+        track.style.transform = '';
+        return;
+      }
+      if (loopWidth > 0) {
+        offset = ((offset % loopWidth) + loopWidth) % loopWidth;
+      }
+      track.style.transform = `translate3d(${-offset}px, 0, 0)`;
+    };
+
+    const measureLoop = () => {
+      const visible = getVisible();
+      if (!visible.length || isStatic) {
+        loopWidth = 0;
+        return;
+      }
+      const gap = getGap();
+      const first = visible[0];
+      const last = visible[visible.length - 1];
+      loopWidth = last.offsetLeft + last.offsetWidth - first.offsetLeft + gap;
+      applyTransform();
+    };
+
+    const appendCloneSet = (visible) => {
+      visible.forEach((card) => {
+        const clone = card.cloneNode(true);
+        clone.setAttribute('data-marquee-clone', 'true');
+        clone.setAttribute('aria-hidden', 'true');
+        clone.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'));
+        track.appendChild(clone);
+      });
+    };
+
+    const setStaticMode = (staticMode) => {
+      isStatic = staticMode;
+      viewport.classList.toggle('is-static', staticMode);
+      if (staticMode) {
+        offset = 0;
+        velocity = 0;
+        loopWidth = 0;
+        track.style.transform = '';
+        viewport.classList.remove('is-dragging');
+        isDragging = false;
+      }
+    };
+
+    const rebuild = () => {
+      track.querySelectorAll('[data-marquee-clone]').forEach((el) => el.remove());
+      const visible = getVisible();
+      if (!visible.length) {
+        setStaticMode(true);
+        return;
+      }
+
+      // Medir solo originales visibles (sin clones)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const contentWidth = measureContentWidth(visible);
+          const viewportW = viewport.clientWidth;
+
+          if (contentWidth <= viewportW) {
+            setStaticMode(true);
+            return;
+          }
+
+          setStaticMode(false);
+          appendCloneSet(visible);
+          measureLoop();
+
+          let guard = 0;
+          while (loopWidth > 0 && track.scrollWidth < viewportW * 2 + loopWidth && guard < 6) {
+            appendCloneSet(visible);
+            measureLoop();
+            guard += 1;
+          }
+        });
+      });
+    };
+
+    const tick = (now) => {
+      const dt = lastTick ? Math.min(now - lastTick, 48) : 16.67;
+      lastTick = now;
+      const frameScale = dt / 16.67;
+
+      if (!isStatic && !isDragging && loopWidth > 0) {
+        if (Math.abs(velocity) > 0.05) {
+          offset += -velocity * frameScale;
+          velocity *= Math.pow(0.94, frameScale);
+          if (Math.abs(velocity) < 0.05) velocity = 0;
+          applyTransform();
+        } else if (!hovering && !reduceMotion) {
+          offset += AUTO_SPEED * frameScale;
+          applyTransform();
+        }
+      }
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    const onPointerDown = (e) => {
+      if (isStatic) return;
+      if (e.button != null && e.button !== 0) return;
+      isDragging = true;
+      didDrag = false;
+      velocity = 0;
+      startX = lastX = e.clientX;
+      offsetStart = offset;
+      lastTime = performance.now();
+      viewport.classList.add('is-dragging');
+      viewport.setPointerCapture?.(e.pointerId);
+    };
+
+    const onPointerMove = (e) => {
+      if (!isDragging || isStatic) return;
+      const now = performance.now();
+      const dx = e.clientX - startX;
+      const frameDx = e.clientX - lastX;
+      const dt = Math.max(now - lastTime, 1);
+      if (Math.abs(dx) > 5) didDrag = true;
+      offset = offsetStart - dx;
+      velocity = (frameDx / dt) * 16;
+      lastX = e.clientX;
+      lastTime = now;
+      applyTransform();
+    };
+
+    const onPointerUp = (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      viewport.classList.remove('is-dragging');
+      try {
+        viewport.releasePointerCapture?.(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+      if (!didDrag) velocity = 0;
+    };
+
+    viewport.addEventListener('pointerdown', onPointerDown);
+    viewport.addEventListener('pointermove', onPointerMove);
+    viewport.addEventListener('pointerup', onPointerUp);
+    viewport.addEventListener('pointercancel', onPointerUp);
+    viewport.addEventListener('pointerenter', () => {
+      hovering = true;
+    });
+    viewport.addEventListener('pointerleave', () => {
+      hovering = false;
+      if (isDragging) {
+        isDragging = false;
+        viewport.classList.remove('is-dragging');
+      }
+    });
+
+    viewport.addEventListener(
+      'click',
+      (e) => {
+        if (didDrag) {
+          e.preventDefault();
+          e.stopPropagation();
+          didDrag = false;
+          return;
+        }
+        const box = e.target.closest('.event-img-box[data-lightbox-src]');
+        if (!box || !viewport.contains(box)) return;
+        openLightbox(
+          box.getAttribute('data-lightbox-src'),
+          box.getAttribute('data-lightbox-title'),
+          box.getAttribute('data-lightbox-desc')
+        );
+      },
+      true
+    );
+
+    window.addEventListener('resize', () => {
+      rebuild();
+    });
+
+    rebuild();
+    rafId = requestAnimationFrame(tick);
+
+    return {
+      applyFilter(filterValue) {
+        originals.forEach((card) => {
+          const category = card.getAttribute('data-category');
+          const show = filterValue === 'todos' || category === filterValue;
+          card.classList.toggle('hidden-card', !show);
+        });
+        offset = 0;
+        velocity = 0;
+        rebuild();
+      },
+      destroy() {
+        cancelAnimationFrame(rafId);
+      },
+    };
+  }
+
+  const galleryMarquee = galleryViewport ? initGalleryMarquee(galleryViewport) : null;
+
+  filterChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      filterChips.forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      const filterValue = chip.getAttribute('data-filter');
+      if (galleryMarquee) {
+        galleryMarquee.applyFilter(filterValue);
+      } else {
+        document.querySelectorAll('.event-photo-card[data-category]').forEach((card) => {
+          const category = card.getAttribute('data-category');
+          const show = filterValue === 'todos' || category === filterValue;
+          card.classList.toggle('hidden-card', !show);
+        });
+      }
+    });
   });
 
 });
