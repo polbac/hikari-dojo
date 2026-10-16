@@ -529,8 +529,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const box = e.target.closest('.event-img-box[data-lightbox-src]');
         if (!box || !viewport.contains(box)) return;
+        const img = box.querySelector('img');
         openLightbox(
-          box.getAttribute('data-lightbox-src'),
+          img?.currentSrc || img?.src || box.getAttribute('data-lightbox-src'),
           box.getAttribute('data-lightbox-title'),
           box.getAttribute('data-lightbox-desc')
         );
