@@ -1,3 +1,9 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
 # macOS
 .DS_Store
 .AppleDouble
@@ -15,3 +21,10 @@
 *.log
 tmp/
 temp/
+.vite/
+
+# Env
+.env
+.env.*
+!.env.example
+

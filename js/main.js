@@ -81,50 +81,137 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 5. Modo Explorar Dojo 3D (Oculta tarjetas para vista limpia 360°)
+  // 5. Modo Explorar Dojo (muestra dock Vista 3D)
   const exploreBtn = document.getElementById('btn-explore-mode');
+  function setExploreMode(active) {
+    document.body.classList.toggle('explore-mode', active);
+    if (exploreBtn) exploreBtn.textContent = active ? 'Volver' : 'Explorar Dojo';
+    if (dojo3D) {
+      dojo3D.setCameraPreset(active ? 'orbit' : 'general');
+      if (active) {
+        dojo3D.scene.background.setHex(0xffffff);
+      }
+    }
+  }
+
   if (exploreBtn) {
     exploreBtn.addEventListener('click', () => {
-      const active = document.body.classList.toggle('explore-mode');
-      exploreBtn.innerHTML = active
-        ? '<span>✕</span> Volver a la Interfaz'
-        : '<span>🏯</span> Explorar Dojo 3D';
-      if (active && dojo3D) {
-        dojo3D.setCameraPreset('orbit');
-      } else if (dojo3D) {
-        dojo3D.setCameraPreset('general');
-      }
+      setExploreMode(!document.body.classList.contains('explore-mode'));
     });
+  }
+
+  const exitExploreBtn = document.getElementById('btn-exit-explore');
+  if (exitExploreBtn) {
+    exitExploreBtn.addEventListener('click', () => setExploreMode(false));
   }
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.body.classList.contains('explore-mode')) {
-      document.body.classList.remove('explore-mode');
-      if (exploreBtn) exploreBtn.innerHTML = '<span>🏯</span> Explorar Dojo 3D';
-      if (dojo3D) dojo3D.setCameraPreset('general');
+      setExploreMode(false);
     }
   });
 
-  // 6. Contador en Tiempo Real para la Próxima Clase (Martes y Viernes 21:00 a 22:30 hs)
+  // 5b. Música de fondo (koto / shakuhachi)
+  const musicBtn = document.getElementById('btn-music');
+  const bgMusic = document.getElementById('bg-music');
+  if (musicBtn && bgMusic) {
+    bgMusic.volume = 0.35;
+
+    async function toggleMusic() {
+      try {
+        if (bgMusic.paused) {
+          await bgMusic.play();
+          musicBtn.classList.add('is-playing');
+          musicBtn.setAttribute('aria-pressed', 'true');
+        } else {
+          bgMusic.pause();
+          musicBtn.classList.remove('is-playing');
+          musicBtn.setAttribute('aria-pressed', 'false');
+        }
+      } catch {
+        musicBtn.classList.remove('is-playing');
+        musicBtn.setAttribute('aria-pressed', 'false');
+      }
+    }
+
+    musicBtn.addEventListener('click', toggleMusic);
+  }
+
+  // 6. Nav activa al scrollear + menú hamburguesa
+  const navbar = document.querySelector('.navbar');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const navBurger = document.getElementById('nav-burger');
+  const sections = [...navLinks]
+    .map((link) => document.querySelector(link.getAttribute('href')))
+    .filter(Boolean);
+
+  function setNavOpen(open) {
+    document.body.classList.toggle('nav-open', open);
+    if (navBurger) {
+      navBurger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      navBurger.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+    }
+  }
+
+  if (navBurger) {
+    navBurger.addEventListener('click', () => {
+      setNavOpen(!document.body.classList.contains('nav-open'));
+    });
+  }
+
+  navLinks.forEach((link) => {
+    link.addEventListener('click', () => setNavOpen(false));
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.body.classList.contains('nav-open')) {
+      setNavOpen(false);
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 992) setNavOpen(false);
+  });
+
+  function updateNavState() {
+    if (navbar) {
+      navbar.classList.toggle('is-scrolled', window.scrollY > 24);
+    }
+
+    const marker = window.scrollY + window.innerHeight * 0.28;
+    let currentId = sections[0]?.id;
+
+    sections.forEach((section) => {
+      if (section.offsetTop <= marker) {
+        currentId = section.id;
+      }
+    });
+
+    navLinks.forEach((link) => {
+      link.classList.toggle('is-active', link.getAttribute('href') === `#${currentId}`);
+    });
+  }
+
+  function onScrollUi() {
+    updateNavState();
+  }
+
+  onScrollUi();
+  window.addEventListener('scroll', onScrollUi, { passive: true });
+
+  // 7. Contador para la próxima clase (Martes y Viernes 21:00–22:30)
   const countdownEl = document.getElementById('next-class-countdown');
-  const statusPillEl = document.getElementById('live-class-status');
 
   function updateClassCountdown() {
     if (!countdownEl) return;
     const now = new Date();
-    const day = now.getDay(); // 0 = Dom, 2 = Mar, 5 = Vie
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const currentMinutes = hours * 60 + minutes;
-
-    const classStartMinutes = 21 * 60;      // 21:00 hs
-    const classEndMinutes = 22 * 60 + 30;   // 22:30 hs
+    const day = now.getDay();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const classStartMinutes = 21 * 60;
+    const classEndMinutes = 22 * 60 + 30;
 
     if ((day === 2 || day === 5) && currentMinutes >= classStartMinutes && currentMinutes <= classEndMinutes) {
       countdownEl.textContent = '¡CLASE EN CURSO AHORA MISMO! (21:00 a 22:30 hs)';
-      if (statusPillEl) {
-        statusPillEl.innerHTML = '<span class="live-dot"></span> En el Tatami ahora (21:00 - 22:30 hs)';
-      }
       return;
     }
 
@@ -149,7 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const h = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
     const m = Math.floor((diffMs / (1000 * 60)) % 60);
     const s = Math.floor((diffMs / 1000) % 60);
-
     const dayLabel = nextDate.getDay() === 2 ? 'Martes' : 'Viernes';
     const dText = d > 0 ? `${d}d ` : '';
     countdownEl.textContent = `${dayLabel} 21:00 hs — Faltan ${dText}${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
@@ -158,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateClassCountdown();
   setInterval(updateClassCountdown, 1000);
 
-  // 7. Formulario de Reserva de Clase de Prueba / Consulta vía WhatsApp (Sensei Gustavo Talavera)
+  // 8. Formulario de reserva / consulta vía WhatsApp
   const form = document.getElementById('trial-class-form');
   const feedbackEl = document.getElementById('form-feedback');
 
@@ -189,9 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 8. Filtros de Galería de Fotos & Eventos + Visor Lightbox
+  // 8. Filtros de Galería + scroll horizontal con drag + Lightbox
   const filterChips = document.querySelectorAll('.filter-chip[data-filter]');
   const galleryCards = document.querySelectorAll('.event-photo-card[data-category]');
+  const galleryTrack = document.getElementById('events-gallery-grid');
 
   filterChips.forEach((chip) => {
     chip.addEventListener('click', () => {
@@ -206,6 +293,94 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
+
+  if (galleryTrack) {
+    let isDragging = false;
+    let didDrag = false;
+    let startX = 0;
+    let scrollStart = 0;
+    let lastX = 0;
+    let lastTime = 0;
+    let velocity = 0;
+    let momentumId = 0;
+
+    const stopMomentum = () => {
+      if (momentumId) {
+        cancelAnimationFrame(momentumId);
+        momentumId = 0;
+      }
+    };
+
+    const runMomentum = () => {
+      stopMomentum();
+      const step = () => {
+        if (Math.abs(velocity) < 0.15) {
+          velocity = 0;
+          momentumId = 0;
+          return;
+        }
+        galleryTrack.scrollLeft -= velocity;
+        velocity *= 0.94;
+        momentumId = requestAnimationFrame(step);
+      };
+      momentumId = requestAnimationFrame(step);
+    };
+
+    const onPointerDown = (e) => {
+      if (e.pointerType === 'touch') return;
+      stopMomentum();
+      isDragging = true;
+      didDrag = false;
+      startX = lastX = e.clientX;
+      lastTime = performance.now();
+      scrollStart = galleryTrack.scrollLeft;
+      velocity = 0;
+      galleryTrack.classList.add('is-dragging');
+      galleryTrack.setPointerCapture?.(e.pointerId);
+    };
+
+    const onPointerMove = (e) => {
+      if (!isDragging) return;
+      const now = performance.now();
+      const dx = e.clientX - startX;
+      const frameDx = e.clientX - lastX;
+      const dt = Math.max(now - lastTime, 1);
+      if (Math.abs(dx) > 4) didDrag = true;
+      galleryTrack.scrollLeft = scrollStart - dx;
+      velocity = (frameDx / dt) * 16;
+      lastX = e.clientX;
+      lastTime = now;
+    };
+
+    const onPointerUp = (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      galleryTrack.classList.remove('is-dragging');
+      try {
+        galleryTrack.releasePointerCapture?.(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+      if (didDrag) runMomentum();
+    };
+
+    galleryTrack.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+
+    galleryTrack.addEventListener(
+      'click',
+      (e) => {
+        if (didDrag) {
+          e.preventDefault();
+          e.stopPropagation();
+          didDrag = false;
+        }
+      },
+      true
+    );
+  }
 
   const lightbox = document.getElementById('gallery-lightbox');
   const lightboxImg = document.getElementById('lightbox-img');
@@ -248,4 +423,5 @@ document.addEventListener('DOMContentLoaded', () => {
       closeLightbox();
     }
   });
+
 });

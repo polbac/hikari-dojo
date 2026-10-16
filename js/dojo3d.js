@@ -18,6 +18,7 @@
       this.orbitAngle = { theta: 0, phi: 0.22, radius: 12.0 };
       this.currentPreset = 'general';
       this.pastelEveningMode = false;
+      this.scrollFraction = 0;
 
       // Posiciones de cámara interpoladas
       this.camPos = new THREE.Vector3(0, 3.4, 11.2);
@@ -42,9 +43,7 @@
 
     initScene() {
       this.scene = new THREE.Scene();
-      // Fondo pastel cálido luminoso (papel arroz / acuarela suave)
-      this.scene.background = new THREE.Color(0xf4efe6);
-      this.scene.fog = new THREE.FogExp2(0xf4efe6, 0.022);
+      this.scene.background = new THREE.Color(0xffffff);
 
       this.camera = new THREE.PerspectiveCamera(
         46,
@@ -88,12 +87,12 @@
       this.dojoTopLight.position.set(0, 6.8, 1.0);
       this.scene.add(this.dojoTopLight);
 
-      // Brillos pasteles laterales (Celeste Shinshukan a la izquierda y Dorado pastel Hikari a la derecha)
-      this.cyanLightLeft = new THREE.PointLight(0x80deea, 0.75, 20);
+      // Luces laterales sage / clay
+      this.cyanLightLeft = new THREE.PointLight(0xadc178, 0.7, 20);
       this.cyanLightLeft.position.set(-6.0, 3.5, -1.0);
       this.scene.add(this.cyanLightLeft);
 
-      this.goldLightRight = new THREE.PointLight(0xffe082, 0.75, 20);
+      this.goldLightRight = new THREE.PointLight(0xa98467, 0.7, 20);
       this.goldLightRight.position.set(6.5, 3.0, -1.0);
       this.scene.add(this.goldLightRight);
     }
@@ -118,7 +117,7 @@
       tatamiCanvas.width = 512;
       tatamiCanvas.height = 256;
       const tCtx = tatamiCanvas.getContext('2d');
-      tCtx.fillStyle = '#c5d3ae'; // Verde salvia pastel claro
+      tCtx.fillStyle = '#dde5b6'; // Sage soft
       tCtx.fillRect(0, 0, 512, 256);
       for (let y = 0; y < 256; y += 3) {
         tCtx.fillStyle = y % 6 === 0 ? 'rgba(255,255,245,0.22)' : 'rgba(95,115,80,0.08)';
@@ -224,13 +223,15 @@
       basePlatform.receiveShadow = true;
       this.dojoGroup.add(basePlatform);
 
-      // Suelo exterior color arena/crema pastel suave
-      const outerFloorMat = new THREE.MeshStandardMaterial({
-        color: 0xebe4d8,
-        roughness: 0.65,
-        metalness: 0.05
+      // Suelo exterior crema claro (fondo legible al scrollear)
+      this.outerFloorMat = new THREE.MeshStandardMaterial({
+        color: 0xf7f3ea,
+        emissive: 0xf2eee4,
+        emissiveIntensity: 0.15,
+        roughness: 0.7,
+        metalness: 0.02
       });
-      const outerFloor = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), outerFloorMat);
+      const outerFloor = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), this.outerFloorMat);
       outerFloor.rotation.x = -Math.PI / 2;
       outerFloor.position.y = -0.35;
       outerFloor.receiveShadow = true;
@@ -335,12 +336,14 @@
        SHOMEN CLARO, SOL ACUARELA PASTEL Y MEDALLONES 3D DEL MISMO TAMAÑO
        ======================================================================== */
     buildShomenAndAuthenticEmblems() {
-      // Pared de fondo en tono marfil / papel de acuarela claro
-      const backWallMat = new THREE.MeshStandardMaterial({
+      // Pared de fondo marfil (también sirve de fondo claro al scrollear)
+      this.backWallMat = new THREE.MeshStandardMaterial({
         color: 0xfaf6ee,
+        emissive: 0xf5f0e6,
+        emissiveIntensity: 0.12,
         roughness: 0.85
       });
-      const backWall = new THREE.Mesh(new THREE.PlaneGeometry(18, 7), backWallMat);
+      const backWall = new THREE.Mesh(new THREE.PlaneGeometry(18, 7), this.backWallMat);
       backWall.position.set(0, 3.4, -6.7);
       this.dojoGroup.add(backWall);
 
@@ -370,7 +373,7 @@
       // 2. PRIMERO (Izquierda): Medallón 3D Oficial SHORIN RYU SHINSHUKAN ARGENTINA (Mismo tamaño: 1.55)
       this.shinshukanEmblem = this.createAuthentic3DMedallion(
         this.shinshukanTexture,
-        0x4dd0e1, // Borde celeste pastel Shinshukan
+        0xadc178, // Borde sage Shinshukan
         1.55
       );
       this.shinshukanEmblem.position.set(-2.55, 3.55, -4.6);
@@ -380,7 +383,7 @@
       // 3. SEGUNDO (Derecha): Medallón 3D Oficial HIKARI DOJO (光) (Mismo tamaño: 1.55)
       this.hikariEmblem = this.createAuthentic3DMedallion(
         this.hikariTexture,
-        0xe6c15a, // Borde dorado pastel Hikari
+        0xa98467, // Borde clay Hikari
         1.55
       );
       this.hikariEmblem.position.set(2.55, 3.55, -4.6);
@@ -601,22 +604,18 @@
     toggleAmbiance() {
       this.pastelEveningMode = !this.pastelEveningMode;
       if (this.pastelEveningMode) {
-        // Modo Crepúsculo Pastel (Azul lavanda suave, nunca oscuro)
-        this.scene.background.setHex(0xe3ecf5);
-        this.scene.fog.color.setHex(0xe3ecf5);
-        this.ambientLight.color.setHex(0xf0f7ff);
+        this.scene.background.setHex(0xdde5b6);
+        this.ambientLight.color.setHex(0xf0ead2);
         this.ambientLight.intensity = 0.88;
-        this.dojoTopLight.color.setHex(0xb3e5fc);
-        this.shojiMaterial.emissive.setHex(0xb2ebf2);
+        this.dojoTopLight.color.setHex(0xadc178);
+        this.shojiMaterial.emissive.setHex(0xdde5b6);
         this.shojiMaterial.emissiveIntensity = 0.4;
       } else {
-        // Modo Día / Acuarela Cálido Pastel
-        this.scene.background.setHex(0xf4efe6);
-        this.scene.fog.color.setHex(0xf4efe6);
-        this.ambientLight.color.setHex(0xfffbf2);
+        this.scene.background.setHex(0xffffff);
+        this.ambientLight.color.setHex(0xffffff);
         this.ambientLight.intensity = 0.95;
-        this.dojoTopLight.color.setHex(0xffe4b5);
-        this.shojiMaterial.emissive.setHex(0xfff3dc);
+        this.dojoTopLight.color.setHex(0xa98467);
+        this.shojiMaterial.emissive.setHex(0xffffff);
         this.shojiMaterial.emissiveIntensity = 0.35;
       }
       return this.pastelEveningMode;
@@ -658,30 +657,80 @@
         return;
       }
       const t = Math.max(0, Math.min(1, scrollFraction));
-      if (t < 0.33) {
-        const p = t / 0.33;
+      this.scrollFraction = t;
+
+      // Recorrido hacia superficies claras: shoji → piso crema → pared marfil → shoji
+      if (t < 0.22) {
+        // Hero → pared shoji izquierda (papel blanco)
+        const p = t / 0.22;
         this.camTargetPos.set(
-          THREE.MathUtils.lerp(0, -1.8, p),
-          THREE.MathUtils.lerp(3.4, 3.5, p),
-          THREE.MathUtils.lerp(11.2, 3.2, p)
+          THREE.MathUtils.lerp(0, -4.2, p),
+          THREE.MathUtils.lerp(3.4, 2.85, p),
+          THREE.MathUtils.lerp(11.2, 2.4, p)
         );
-        this.lookAtTarget.set(0, THREE.MathUtils.lerp(2.7, 3.5, p), -4.6);
+        this.lookAtTarget.set(
+          THREE.MathUtils.lerp(0, -8.6, p),
+          THREE.MathUtils.lerp(2.7, 2.7, p),
+          THREE.MathUtils.lerp(-3.5, 0.2, p)
+        );
+      } else if (t < 0.45) {
+        // Shoji → piso crema (fuera del tatami, más claro)
+        const p = (t - 0.22) / 0.23;
+        this.camTargetPos.set(
+          THREE.MathUtils.lerp(-4.2, 0.4, p),
+          THREE.MathUtils.lerp(2.85, 6.4, p),
+          THREE.MathUtils.lerp(2.4, 9.2, p)
+        );
+        this.lookAtTarget.set(
+          THREE.MathUtils.lerp(-8.6, 0, p),
+          THREE.MathUtils.lerp(2.7, -0.25, p),
+          THREE.MathUtils.lerp(0.2, 5.5, p)
+        );
       } else if (t < 0.68) {
-        const p = (t - 0.33) / 0.35;
+        // Piso → pared marfil del shomen (fondo casi blanco)
+        const p = (t - 0.45) / 0.23;
         this.camTargetPos.set(
-          THREE.MathUtils.lerp(-1.8, 2.4, p),
-          THREE.MathUtils.lerp(3.5, 3.1, p),
-          THREE.MathUtils.lerp(3.2, 5.2, p)
+          THREE.MathUtils.lerp(0.4, 0, p),
+          THREE.MathUtils.lerp(6.4, 3.2, p),
+          THREE.MathUtils.lerp(9.2, 2.8, p)
         );
-        this.lookAtTarget.set(0, 2.8, -3.5);
+        this.lookAtTarget.set(
+          0,
+          THREE.MathUtils.lerp(-0.25, 3.2, p),
+          THREE.MathUtils.lerp(5.5, -6.5, p)
+        );
       } else {
+        // Cierre: papel shoji derecho llena el frame
         const p = (t - 0.68) / 0.32;
         this.camTargetPos.set(
-          THREE.MathUtils.lerp(2.4, 0, p),
-          THREE.MathUtils.lerp(3.1, 4.0, p),
-          THREE.MathUtils.lerp(5.2, 10.5, p)
+          THREE.MathUtils.lerp(0, 6.2, p),
+          THREE.MathUtils.lerp(3.2, 2.7, p),
+          THREE.MathUtils.lerp(2.8, 0.4, p)
         );
-        this.lookAtTarget.set(0, 2.8, -3.5);
+        this.lookAtTarget.set(
+          THREE.MathUtils.lerp(0, 8.8, p),
+          THREE.MathUtils.lerp(3.2, 2.65, p),
+          THREE.MathUtils.lerp(-6.5, 0.5, p)
+        );
+      }
+
+      // Más brillo en superficies claras a medida que scrolleás
+      if (!this.pastelEveningMode) {
+        if (this.shojiMaterial) {
+          this.shojiMaterial.emissiveIntensity = THREE.MathUtils.lerp(0.35, 0.9, t);
+        }
+        if (this.outerFloorMat) {
+          this.outerFloorMat.emissiveIntensity = THREE.MathUtils.lerp(0.15, 0.45, t);
+        }
+        if (this.backWallMat) {
+          this.backWallMat.emissiveIntensity = THREE.MathUtils.lerp(0.12, 0.4, t);
+        }
+        if (this.ambientLight) {
+          this.ambientLight.intensity = THREE.MathUtils.lerp(0.95, 1.35, t);
+        }
+        if (this.renderer) {
+          this.renderer.toneMappingExposure = THREE.MathUtils.lerp(1.08, 1.28, t);
+        }
       }
     }
 
@@ -794,8 +843,10 @@
         this.lookAtTarget.set(0, 2.2, -2.0);
       }
 
-      const parallaxX = this.mouse.x * 0.5;
-      const parallaxY = -this.mouse.y * 0.3;
+      // Menos parallax al scrollear para no “ensuciar” el fondo claro detrás del texto
+      const parallaxFade = 1 - this.scrollFraction * 0.85;
+      const parallaxX = this.mouse.x * 0.5 * parallaxFade;
+      const parallaxY = -this.mouse.y * 0.3 * parallaxFade;
 
       this.camPos.x += (this.camTargetPos.x + parallaxX - this.camPos.x) * 0.05;
       this.camPos.y += (this.camTargetPos.y + parallaxY - this.camPos.y) * 0.05;
