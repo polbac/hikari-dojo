@@ -338,15 +338,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let isStatic = false;
     let hovering = false;
     let isDragging = false;
+    let pendingDrag = false;
     let didDrag = false;
     let startX = 0;
+    let startY = 0;
     let offsetStart = 0;
     let lastX = 0;
     let lastTime = 0;
+    let activePointerId = null;
     let rafId = 0;
     let lastTick = 0;
 
     const AUTO_SPEED = 0.55; // px por frame (~60fps) → derecha a izquierda
+    const DRAG_THRESHOLD = 6;
 
     const getVisible = () =>
       originals.filter((c) => !c.classList.contains('hidden-card'));
@@ -464,26 +468,63 @@ document.addEventListener('DOMContentLoaded', () => {
       rafId = requestAnimationFrame(tick);
     };
 
+    const endPointerGesture = (e) => {
+      if (!pendingDrag && !isDragging) return;
+      pendingDrag = false;
+      isDragging = false;
+      viewport.classList.remove('is-dragging');
+      try {
+        if (activePointerId != null) {
+          viewport.releasePointerCapture?.(activePointerId);
+        }
+      } catch {
+        /* ignore */
+      }
+      activePointerId = null;
+      if (!didDrag) velocity = 0;
+      // Liberar didDrag en el próximo tick para no tapar el click
+      if (didDrag) {
+        requestAnimationFrame(() => {
+          didDrag = false;
+        });
+      }
+    };
+
     const onPointerDown = (e) => {
       if (isStatic) return;
       if (e.button != null && e.button !== 0) return;
-      isDragging = true;
+      // No iniciar drag sobre controles interactivos (Ver foto, etc.)
+      if (e.target.closest('button, a, input, select, textarea')) return;
+
+      pendingDrag = true;
+      isDragging = false;
       didDrag = false;
       velocity = 0;
       startX = lastX = e.clientX;
+      startY = e.clientY;
       offsetStart = offset;
       lastTime = performance.now();
-      viewport.classList.add('is-dragging');
-      viewport.setPointerCapture?.(e.pointerId);
+      activePointerId = e.pointerId;
     };
 
     const onPointerMove = (e) => {
-      if (!isDragging || isStatic) return;
-      const now = performance.now();
+      if (isStatic || (!pendingDrag && !isDragging)) return;
+
       const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      if (!isDragging) {
+        if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+        isDragging = true;
+        didDrag = true;
+        pendingDrag = false;
+        viewport.classList.add('is-dragging');
+        viewport.setPointerCapture?.(activePointerId ?? e.pointerId);
+      }
+
+      const now = performance.now();
       const frameDx = e.clientX - lastX;
       const dt = Math.max(now - lastTime, 1);
-      if (Math.abs(dx) > 5) didDrag = true;
       offset = offsetStart - dx;
       velocity = (frameDx / dt) * 16;
       lastX = e.clientX;
@@ -491,17 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
       applyTransform();
     };
 
-    const onPointerUp = (e) => {
-      if (!isDragging) return;
-      isDragging = false;
-      viewport.classList.remove('is-dragging');
-      try {
-        viewport.releasePointerCapture?.(e.pointerId);
-      } catch {
-        /* ignore */
-      }
-      if (!didDrag) velocity = 0;
-    };
+    const onPointerUp = (e) => endPointerGesture(e);
 
     viewport.addEventListener('pointerdown', onPointerDown);
     viewport.addEventListener('pointermove', onPointerMove);
@@ -512,11 +543,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     viewport.addEventListener('pointerleave', () => {
       hovering = false;
-      if (isDragging) {
-        isDragging = false;
-        viewport.classList.remove('is-dragging');
-      }
+      if (pendingDrag || isDragging) endPointerGesture();
     });
+
+    const findLightboxBox = (e) => {
+      const direct = e.target.closest?.('.event-img-box[data-lightbox-src]');
+      if (direct && viewport.contains(direct)) return direct;
+      const hit = document.elementsFromPoint(e.clientX, e.clientY);
+      return (
+        hit.find(
+          (el) =>
+            el instanceof Element &&
+            el.matches('.event-img-box[data-lightbox-src]') &&
+            viewport.contains(el)
+        ) || null
+      );
+    };
 
     viewport.addEventListener(
       'click',
@@ -524,11 +566,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (didDrag) {
           e.preventDefault();
           e.stopPropagation();
-          didDrag = false;
           return;
         }
-        const box = e.target.closest('.event-img-box[data-lightbox-src]');
-        if (!box || !viewport.contains(box)) return;
+        const box = findLightboxBox(e);
+        if (!box) return;
+        e.preventDefault();
         const img = box.querySelector('img');
         openLightbox(
           img?.currentSrc || img?.src || box.getAttribute('data-lightbox-src'),
