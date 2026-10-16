@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karate Do - Shorin Ryu Shinshukan - Hikari Dojo</title>
+  <meta name="description" content="Karate Do - Shorin Ryu Shinshukan - Hikari Dojo. Clases para adolescentes y adultos en Espacio Betsubara, Villa Crespo. Martes y Viernes de 21:00 a 22:30 hs." />
+
+  <!-- Tipografías Japonesas y Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+JP:wght@600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Hoja de estilos -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- PANTALLA DE CARGA INICIAL: ARRIBA LOGO SHINSHUKAN, DEBAJO DE LA BARRA LOGO HIKARI DOJO -->
+  <div id="loader-screen" aria-hidden="true">
+    <img src="assets/logo-shinshukan.png" alt="Logo Okinawa Shorin Ryu Karatedo Shinshukan Argentina" style="width: 96px; height: 96px; border-radius: 50%; background: #fff; padding: 3px; margin-bottom: 1.25rem; box-shadow: 0 0 34px rgba(6, 182, 212, 0.55); border: 2px solid #06b6d4;" />
+    <div class="loader-title">KARATE DO • SHORIN RYU SHINSHUKAN • HIKARI DOJO</div>
+    <div class="loader-bar-wrap">
+      <div class="loader-bar" id="loader-bar"></div>
+    </div>
+    <img src="assets/logo-hikari.png" alt="Logo Hikari Dojo" style="width: 96px; height: 96px; border-radius: 50%; background: #fff; padding: 3px; margin-top: 1.25rem; box-shadow: 0 0 30px rgba(245, 158, 11, 0.45); border: 2px solid #eab308;" />
+  </div>
+
+  <!-- LIENZO THREE.JS (DOJO 3D INTERACTIVO) -->
+  <div id="webgl-container" aria-label="Escena 3D interactiva de Karate Do - Shorin Ryu Shinshukan - Hikari Dojo"></div>
+  <div class="vignette-overlay"></div>
+
+  <!-- PISTA DE MODO EXPLORACIÓN -->
+  <div class="explore-hint">
+    🖱️ Arrastrá con el mouse para girar 360° • Rueda para hacer zoom • Presioná <strong>ESC</strong> para volver
+  </div>
+
+  <!-- NAVEGACIÓN SUPERIOR: SHINSHUKAN PRIMERO, HIKARI SEGUNDO, AMBOS DEL MISMO TAMAÑO -->
+  <header class="navbar">
+    <a href="#inicio" class="brand">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <img src="assets/logo-shinshukan.png" alt="Logo Shinshukan Argentina" style="width: 44px; height: 44px; border-radius: 50%; background: #fff; padding: 2px; box-shadow: 0 0 14px rgba(6, 182, 212, 0.45);" />
+        <img src="assets/logo-hikari.png" alt="Logo Hikari Dojo" style="width: 44px; height: 44px; border-radius: 50%; background: #fff; padding: 2px; box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);" />
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">KARATE DO • SHORIN RYU SHINSHUKAN</span>
+        <span class="brand-sub">Hikari Dojo • Argentina</span>
+      </div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#inicio">Inicio</a></li>
+      <li><a href="#linaje">Escuela &amp; Linaje</a></li>
+      <li><a href="#horarios">Horarios</a></li>
+      <li><a href="#eventos">Fotos &amp; Eventos</a></li>
+      <li><a href="#comunidad">Ubicación &amp; Contacto</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <button type="button" class="btn-explore-3d" id="btn-explore-mode" title="Ocultar tarjetas y explorar el Dojo en 3D">
+        <span>🏯</span> Explorar Dojo 3D
+      </button>
+      <a href="https://wa.me/5491122636846?text=Hola%20Sensei%20Gustavo%20Talavera%2C%20quisiera%20consultar%20por%20las%20clases%20de%20Karate%20Do%20-%20Shorin%20Ryu%20Shinshukan%20-%20Hikari%20Dojo%20(Martes%20y%20Viernes%20de%2021%3A00%20a%2022%3A30%20hs)." target="_blank" rel="noopener" class="btn-cta-nav">
+        💬 WhatsApp Inscripción
+      </a>
+    </div>
+  </header>
+
+  <!-- DOCK FLOTANTE DE CÁMARAS 3D (SHINSHUKAN PRIMERO) -->
+  <nav class="controls-3d-dock" aria-label="Controles de cámara 3D">
+    <span class="dock-label">Vista 3D</span>
+    <button type="button" class="cam-btn active" data-cam="general">Vista General</button>
+    <button type="button" class="cam-btn" data-cam="shinshukan">Logo Shinshukan 3D</button>
+    <button type="button" class="cam-btn" data-cam="hikari">Logo Hikari 3D</button>
+    <button type="button" class="cam-btn" data-cam="shomen">Altar Shomen</button>
+    <button type="button" class="cam-btn" data-cam="makiwara">Makiwara Okinawense</button>
+    <button type="button" class="cam-btn" data-cam="orbit">Órbita 360°</button>
+    <button type="button" class="cam-btn kiai-btn" id="btn-kiai">⚡ ¡Kiai! Energía</button>
+  </nav>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="content-wrapper">
+
+    <!-- ====================================================================
+         1. SECCIÓN HERO (ORDEN EXACTO: KARATE DO - SHORIN RYU SHINSHUKAN - HIKARI DOJO)
+         ==================================================================== -->
+    <section class="section" id="inicio">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="hero-badge-row">
+            <span class="pill-badge">🇦🇷 Okinawa Karate Do • Argentina 🇯🇵</span>
+            <span class="pill-badge gold">Sensei Gustavo Talavera</span>
+          </div>
+
+          <span class="hero-jp-watermark">空手道 • 小林流新秀館 • 光道場</span>
+
+          <h1 class="hero-title">
+            KARATE DO<br />
+            <span class="highlight-crimson">SHORIN RYU SHINSHUKAN</span>
+            <span class="highlight-shorin">Hikari Dojo</span>
+          </h1>
+
+          <p class="hero-subtitle">
+            Escuela tradicional de Okinawa <strong>Karate Do - Shorin Ryu Shinshukan - Hikari Dojo</strong> a cargo del <strong>Sensei Gustavo Talavera</strong> en <strong>Villa Crespo</strong> (Espacio Betsubara). Entrenamiento integral de <em>Kihon</em>, <em>Kata</em> y <em>Kumite</em>.
+          </p>
+
+          <!-- TARJETA DESTACADA DE HORARIOS EN EL HERO -->
+          <div class="hero-schedule-card">
+            <div class="hero-schedule-header">
+              <span class="hero-schedule-label">🥋 Días y Horarios de Entrenamiento</span>
+              <span class="live-status-pill" id="live-class-status">
+                <span class="live-dot"></span> Inscripciones Abiertas
+              </span>
+            </div>
+            <div class="hero-schedule-main">
+              MARTES Y VIERNES • <span>21:00 a 22:30 HS</span>
+            </div>
+            <div class="hero-schedule-meta">
+              <span>📍 Betsubara Dojo — Acoyte 1678, Ciudad Autónoma de Buenos Aires</span>
+              <span>🥋 Sensei Gustavo Talavera • WhatsApp: +54 9 11 2263-6846</span>
+            </div>
+          </div>
+
+          <div class="hero-cta-group">
+            <a href="https://wa.me/5491122636846?text=Hola%20Sensei%20Gustavo%20Talavera%2C%20quisiera%20reservar%20una%20clase%20de%20prueba%20en%20Karate%20Do%20-%20Shorin%20Ryu%20Shinshukan%20-%20Hikari%20Dojo%20(Martes%20y%20Viernes%2021%3A00%20a%2022%3A30%20hs)." target="_blank" rel="noopener" class="btn-primary">
+              <span>💬</span> Contactar al Sensei por WhatsApp
+            </a>
+            <a href="#comunidad" class="btn-secondary">
+              <span>🥋</span> Coordinar Primera Clase
+            </a>
+          </div>
+        </div>
+
+        <!-- PANEL INTERACTIVO: SHINSHUKAN PRIMERO, HIKARI DOJO SEGUNDO (MISMO TAMAÑO) -->
+        <aside class="hero-interactive-panel" aria-label="Insignias oficiales en 3D">
+          <div class="panel-mini-title">Insignias Oficiales en el Shomen 3D</div>
+          <h2 class="panel-heading">Karate Do • Shorin Ryu Shinshukan • Hikari Dojo</h2>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.9rem;">
+            <button type="button" class="stance-btn" data-cam-trigger="shinshukan" style="text-align: center; padding: 0.9rem 0.6rem;">
+              <img src="assets/logo-shinshukan.png" alt="Logo Okinawa Shorin Ryu Karatedo Shinshukan Argentina" style="width: 84px; height: 84px; border-radius: 50%; background: #fff; padding: 3px; margin: 0 auto 0.55rem; display: block; box-shadow: 0 4px 16px rgba(6, 182, 212, 0.38);" />
+              <strong>Shinshukan</strong>
+              <span>Enfocar en 3D ↗</span>
+            </button>
+
+            <button type="button" class="stance-btn" data-cam-trigger="hikari" style="text-align: center; padding: 0.9rem 0.6rem;">
+              <img src="assets/logo-hikari.png" alt="Logo Hikari Dojo" style="width: 84px; height: 84px; border-radius: 50%; background: #fff; padding: 3px; margin: 0 auto 0.55rem; display: block; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);" />
+              <strong>Hikari Dojo</strong>
+              <span>Enfocar en 3D ↗</span>
+            </button>
+          </div>
+
+          <button type="button" class="stance-btn" data-cam-trigger="shomen" style="width: 100%; text-align: center; margin-bottom: 0.9rem;">
+            <strong>⛩️ Ver Altar Shomen Completo en 3D</strong>
+            <span>Sol Naciente + Ambos Escudos Oficiales</span>
+          </button>
+
+          <div class="ambiance-toggle-row">
+            <span>Iluminación del Dojo:</span>
+            <button type="button" class="ambiance-btn" id="btn-ambiance">
+              🌅 Modo: Cálido Pastel
+            </button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         2. SECCIÓN ESCUELA Y LINAJE (ORDEN EXACTO: KARATE DO - SHORIN RYU SHINSHUKAN - HIKARI DOJO)
+         ==================================================================== -->
+    <section class="section" id="linaje">
+      <div class="section-header">
+        <div class="section-eyebrow">Nuestra Identidad Marcial</div>
+        <h2 class="section-title">
+          Karate Do • <span style="color: var(--cyan-pastel);">Shorin Ryu Shinshukan</span> • <span style="color: var(--gold-light);">Hikari Dojo</span>
+        </h2>
+        <p class="section-desc">
+          Nuestra práctica preserva las raíces del Karate de Okinawa bajo los estándares técnicos y éticos de la escuela <strong>Shorin Ryu Shinshukan</strong> en nuestro espacio <strong>Hikari Dojo</strong>, bajo la dirección del <strong>Sensei Gustavo Talavera</strong>.
+        </p>
+      </div>
+
+      <div class="cards-grid-3">
+        <!-- 1. KARATE DO -->
+        <article class="glass-card">
+          <div class="card-kanji-badge" style="width: 68px; height: 68px; font-size: 1.75rem;">空</div>
+          <h3>1. Karate Do</h3>
+          <p>
+            El camino de la mano vacía nacido en Okinawa. Desarrolla coordinación, velocidad, potencia de impacto, defensa personal real (<em>Bunkai</em>) y respeto mutuo dentro y fuera del tatami.
+          </p>
+          <span class="card-tag">Arte Marcial Tradicional de Okinawa</span>
+        </article>
+
+        <!-- 2. SHORIN RYU SHINSHUKAN -->
+        <article class="glass-card">
+          <div style="margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.85rem;">
+            <img src="assets/logo-shinshukan.png" alt="Logo Okinawa Shorin Ryu Shinshukan Argentina" style="width: 68px; height: 68px; border-radius: 50%; background: #fff; padding: 2px; box-shadow: 0 4px 14px rgba(30, 159, 176, 0.25);" />
+          </div>
+          <h3>2. Shorin Ryu Shinshukan</h3>
+          <p>
+            Representada por nuestro escudo oficial con el <em>Hidari Gomon</em> rojo de Okinawa, el puño dorado central y los kanjis <strong>新秀館</strong>. Formación rigurosa en <em>Kihon</em>, <em>Kata</em> tradicional y <em>Kumite</em>.
+          </p>
+          <span class="card-tag">Okinawa Shorin Ryu • Argentina</span>
+        </article>
+
+        <!-- 3. HIKARI DOJO -->
+        <article class="glass-card">
+          <div style="margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.75rem;">
+            <img src="assets/logo-hikari.png" alt="Logo Hikari Dojo" style="width: 68px; height: 68px; border-radius: 50%; background: #fff; padding: 2px; box-shadow: 0 4px 14px rgba(212, 158, 42, 0.25);" />
+          </div>
+          <h3>3. Hikari Dojo (光)</h3>
+          <p>
+            Nuestro dojo en Villa Crespo (Espacio Betsubara) a cargo del <strong>Sensei Gustavo Talavera</strong>, donde cada Martes y Viernes entrenamos adolescentes y adultos.
+          </p>
+          <span class="card-tag">Sensei Gustavo Talavera</span>
+        </article>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         3. SECCIÓN HORARIOS DE CLASE (SIN LA ESTRUCTURA DE CLASE)
+         ==================================================================== -->
+    <section class="section" id="horarios">
+      <div class="section-header">
+        <div class="section-eyebrow">Agenda Semanal del Dojo</div>
+        <h2 class="section-title">Horarios de Clase</h2>
+        <p class="section-desc">
+          Entrenamos los <strong>Martes y Viernes de 21:00 a 22:30 hs</strong> en el Espacio Betsubara Dojo (Villa Crespo).
+        </p>
+      </div>
+
+      <div class="schedule-single-wrap">
+        <div class="schedule-banner">
+          <div>
+            <span class="pill-badge gold">Ciclo de Entrenamiento Activo</span>
+            <h3 style="font-family: var(--font-display); font-size: 1.75rem; margin-top: 0.9rem; color: var(--text-dark);">
+              Karate Do - Shorin Ryu Shinshukan - Hikari Dojo
+            </h3>
+            <p style="color: var(--text-muted); font-size: 0.94rem; margin-top: 0.35rem;">
+              Clases para adolescentes y adultos a cargo del <strong>Sensei Gustavo Talavera</strong>. No se requiere experiencia previa.
+            </p>
+
+            <div class="days-grid">
+              <div class="day-box">
+                <div class="day-name">Martes</div>
+                <div class="day-time">21:00 a 22:30 hs</div>
+                <div class="day-sub">Adolescentes y Adultos • Espacio Betsubara</div>
+              </div>
+
+              <div class="day-box">
+                <div class="day-name">Viernes</div>
+                <div class="day-time">21:00 a 22:30 hs</div>
+                <div class="day-sub">Adolescentes y Adultos • Espacio Betsubara</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="countdown-box">
+            <div>
+              <div class="countdown-label">⏳ Próximo entrenamiento en el Tatami</div>
+              <div class="countdown-timer" id="next-class-countdown">Calculando próximo turno...</div>
+            </div>
+            <a href="https://wa.me/5491122636846?text=Hola%20Sensei%20Gustavo%20Talavera%2C%20quiero%20sumarme%20a%20las%20clases%20de%20Karate%20Do%20-%20Shorin%20Ryu%20Shinshukan%20-%20Hikari%20Dojo%20(Martes%20y%20Viernes%20de%2021%3A00%20a%2022%3A30%20hs)." target="_blank" rel="noopener" class="btn-primary" style="padding: 0.75rem 1.35rem; font-size: 0.84rem;">
+              💬 Sumarme por WhatsApp
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         4. SECCIÓN FOTOS, EVENTOS, EXÁMENES Y VIDA EN EL DOJO (INSTAGRAM OFICIAL)
+         ==================================================================== -->
+    <section class="section" id="eventos">
+      <div class="section-header">
+        <div class="section-eyebrow">Galería Oficial • @hikari_dojo_karate_do</div>
+        <h2 class="section-title">Fotos, Eventos &amp; Vida en el Dojo</h2>
+        <p class="section-desc">
+          Recorrido por nuestras prácticas conjuntas interdojos, exámenes de graduación (<em>Kyus</em>), entrenamientos de <em>Kihon</em>, <em>Kata</em>, <em>Hojo Undo</em> y encuentros de camaradería de <strong>Karate Do - Shorin Ryu Shinshukan - Hikari Dojo</strong> bajo la dirección del <strong>Sensei Gustavo Talavera (6° Dan)</strong>.
+        </p>
+      </div>
+
+      <!-- FILTROS INTERACTIVOS DE LA GALERÍA -->
+      <div class="gallery-filters" role="tablist" aria-label="Filtrar fotos y eventos del dojo">
+        <button type="button" class="filter-chip active" data-filter="todos">✨ Todos (9)</button>
+        <button type="button" class="filter-chip" data-filter="encuentros">🤝 Prácticas Conjuntas &amp; Eventos</button>
+        <button type="button" class="filter-chip" data-filter="examenes">🥋 Exámenes de Kyus</button>
+        <button type="button" class="filter-chip" data-filter="entrenamiento">🏯 Clases en Betsubara Dojo</button>
+        <button type="button" class="filter-chip" data-filter="camaraderia">🍻 Camaradería &amp; Comunidad</button>
+      </div>
+
+      <!-- GRILLA DE FOTOS Y EVENTOS REALES DEL INSTAGRAM -->
+      <div class="events-gallery-grid" id="events-gallery-grid">
+
+        <!-- 1. PRÁCTICA CONJUNTA EN BETSUBARA DOJO (FOTO GRUPAL TATAMI) -->
+        <article class="event-photo-card featured" data-category="encuentros">
+          <div class="event-img-box" data-lightbox-src="assets/galeria/practica-conjunta-betsubara.webp" data-lightbox-title="Práctica Conjunta Interdojos en Betsubara Dojo" data-lightbox-desc="Gran encuentro de Karate Do - Shorin Ryu Shinshukan en Betsubara Dojo (Acoyte 1678, CABA) compartiendo tatami entre Hikari Dojo (Sensei Gustavo Talavera, 6° Dan) y Meiyo Dojo (Sensei Hernán Ashifu).">
+            <img src="assets/galeria/practica-conjunta-betsubara.webp" alt="Práctica Conjunta Okinawa Shorin Ryu Karatedo Argentina - Hikari Dojo y Meiyo Dojo en Betsubara" loading="lazy" />
+            <span class="event-category-pill">🤝 Práctica Conjunta</span>
+            <button type="button" class="event-zoom-btn" aria-label="Ampliar imagen">🔍 Ver foto</button>
+          </div>
+          <div class="event-card-content">
+            <div class="event-meta-row">
+              <span>📍 Betsubara Dojo (Acoyte 1678, CABA)</span>
+              <span>🥋 Escuela Shinshukan Argentina</span>
+            </div>
+            <h3>Práctica Conjunta Interdojos: Hikari Dojo &amp; Meiyo Dojo</h3>
+            <p>
+              Jornada especial de entrenamiento conjunto en nuestro tatami de <strong>Betsubara Dojo</strong> reuniendo a los practicantes de <strong>Hikari Dojo</strong> (Sensei Gustavo Talavera) y <strong>Meiyo Dojo</strong> (Sensei Hernán Ashifu) bajo el emblema de <em>Okinawa Shorin Ryu Karatedo Shinshukan Argentina</em>.
+            </p>
+          </div>
+        </article>
+
+        <!-- 2. EXAMEN DE KYUS (GRADUACIONES) -->
+        <article class="event-photo-card" data-category="examenes">
+          <div class="event-img-box" data-lightbox-src="assets/galeria/examen-kyus-shinshukan.jpg" data-lightbox-title="Examen de Kyus — Karate Do Shorin Ryu Shinshukan" data-lightbox-desc="Evaluación oficial de grados (Kyus) para alumnos de Hikari Dojo (Sensei Gustavo Talavera) y Meiyo Dojo (Sensei Hernán Ashifu), honrando el legado de Emiko Ganiko Sensei y Gajimaru Dojo.">
+            <img src="assets/galeria/examen-kyus-shinshukan.jpg" alt="Examen de Kyus de alumnos de Hikari Dojo y Meiyo Dojo - Shorin Ryu Shinshukan" loading="lazy" />
+            <span class="event-category-pill gold">🥋 Examen de Grados</span>
+            <button type="button" class="event-zoom-btn" aria-label="Ampliar imagen">🔍 Ver foto</button>
+          </div>
+          <div class="event-card-content">
+            <div class="event-meta-row">
+              <span>🏅 Mesa Examinadora Oficial</span>
+              <span>🇯🇵 Linaje Shinshukan</span>
+            </div>
+            <h3>Examen de Kyus — Evaluaciones de Grado</h3>
+            <p>
+              Instancia de evaluación técnica y marcial de alumnos de <strong>Hikari Dojo</strong> (Gustavo Talavera) y <strong>Meiyo Dojo</strong> (Hernán Ashifu), honrando los principios del Budo y la memoria de <em>Emiko Ganiko Sensei</em> (Gajimaru Dojo).
+            </p>
+          </div>
+        </article>
+
+        <!-- 3. ENCUENTRO EN EL CENTRO DARUMA -->
+        <article class="event-photo-card" data-category="encuentros">
+          <div class="event-img-box" data-lightbox-src="assets/galeria/encuentro-centro-daruma.webp" data-lightbox-title="Práctica Conjunta en el Centro Daruma" data-lightbox-desc="Encuentro especial de Karate Do Shorin Ryu Shinshukan compartido entre Hikari Dojo y Meiyo Dojo en las instalaciones del Centro Daruma.">
+            <img src="assets/galeria/encuentro-centro-daruma.webp" alt="Práctica Conjunta de Karate Do Shorin Ryu Shinshukan en el Centro Daruma" loading="lazy" />
+            <span class="event-category-pill">⛩️ Encuentro Especial</span>
+            <button type="button" class="event-zoom-btn" aria-label="Ampliar imagen">🔍 Ver foto</button>
+          </div>
+          <div class="event-card-content">
+            <div class="event-meta-row">
+              <span>📍 Centro Daruma</span>
+              <span>🥋 Intercambio Técnico</span>
+            </div>
+            <h3>Jornada Especial en el Centro Daruma</h3>
+            <p>
+              Práctica conjunta e intercambio marcial de <strong>Karate Do - Shorin Ryu Shinshukan</strong> fortaleciendo los lazos de fraternidad entre dojos hermanos de la escuela.
+            </p>
+          </div>
+        </article>
+
+        <!-- 4. CLASE DE LOS VIERNES EN BETSUBARA DOJO -->
+        <article class="event-photo-card" data-category="entrenamiento">
+          <div class="event-img-box" data-lightbox-src="assets/galeria/clase-viernes-betsubara.webp" data-lightbox-title="Práctica de los Viernes en Betsubara Dojo" data-lightbox-desc="Grupo de practicantes junto al Sensei Gustavo Talavera (6° Dan) frente al Shomen de Betsubara Dojo (Acoyte 1678, CABA).">
+            <img src="assets/galeria/clase-viernes-betsubara.webp" alt="Práctica de viernes en Betsubara Dojo - Hikari Dojo Karate Do" loading="lazy" />
+            <span class="event-category-pill cyan">🏯 Vida en el Tatami</span>
+            <button type="button" class="event-zoom-btn" aria-label="Ampliar imagen">🔍 Ver foto</button>
+          </div>
+          <div class="event-card-content">
+            <div class="event-meta-row">
+              <span>🗓️ Martes y Viernes 21:00 hs</span>
+              <span>📍 Acoyte 1678, CABA</span>
+            </div>
+            <h3>Entrenamiento Regular en Betsubara Dojo</h3>
+            <p>
+              Final de clase junto al <strong>Sensei Gustavo Talavera (6° Dan)</strong> frente al <em>Shomen</em> y los armeros tradicionales de madera en nuestra sede de Villa Crespo.
+            </p>
+          </div>
+        </article>
+
+        <!-- 5. HOJO UNDO: ACONDICIONAMIENTO TRADICIONAL OKINAWENSE -->
+        <article class="event-photo-card" data-category="entrenamiento">
+          <div class="event-img-box" data-lightbox-src="assets/galeria/entrenamiento-hojo-undo.jpg" data-lightbox-title="Hojo Undo y Fortalecimiento Tradicional de Okinawa" data-lightbox-desc="Preparación física tradicional sobre soportes de madera en el tatami de Betsubara Dojo para fortalecer puños, muñecas y estructura corporal.">
+            <img src="assets/galeria/entrenamiento-hojo-undo.jpg" alt="Entrenamiento tradicional Hojo Undo en Hikari Dojo" loading="lazy" />
+            <span class="event-category-pill cyan">💪 Hojo Undo</span>
+            <button type="button" class="event-zoom-btn" aria-label="Ampliar imagen">🔍 Ver foto</button>
+          </div>
+          <div class="event-card-content">
+            <div class="event-meta-row">
+              <span>🥋 Tradición de Okinawa</span>
+              <span>⚡ Fortaleza Física y Mental</span>
+            </div>
+            <h3>Fortalecimiento &amp; Preparación Tradicional</h3>
+            <p>
+              Trabajo de acondicionamiento físico marcial sobre soportes de madera en el tatami, cultivando la firmeza de impacto (<em>Seiken</em>), la postura y la perseverancia propia de Okinawa.
+            </p>
+          </div>
+        </article>
+
+        <!-- 6. PRÁCTICA DE KIHON Y KATA EN EL TATAMI -->
+        <article class="event-photo-card" data-category="entrenamiento">
+          <div class="event-img-box" data-lightbox-src="assets/galeria/entrenamiento-grupo-tatami.jpg" data-lightbox-title="Práctica de Kihon y Kata — Shorin Ryu Shinshukan" data-lightbox-desc="Entrenamiento técnico de ataques, defensas y posturas tradicionales de Okinawa en las clases de Martes y Viernes de 21:00 a 22:30 hs.">
+            <img src="assets/galeria/entrenamiento-grupo-tatami.jpg" alt="Práctica de Kihon y Kata en Hikari Dojo" loading="lazy" />
+            <span class="event-category-pill cyan">🥋 Kihon &amp; Kata</span>
+            <button type="button" class="event-zoom-btn" aria-label="Ampliar imagen">🔍 Ver foto</button>
+          </div>
+          <div class="event-card-content">
+            <div class="event-meta-row">
+              <span>🎯 Técnica Depurada</span>
+              <span>👥 Adolescentes y Adultos</span>
+            </div>
+            <h3>Práctica de Kihon, Kata &amp; Bunkai</h3>
+            <p>
+              Ejecución técnica coordinada en el tatami de <strong>Betsubara Dojo</strong>. El entrenamiento constante desarrolla velocidad, equilibrio, defensa personal y foco mental.
+            </p>
+          </div>
+        </article>
+
+        <!-- 7. AFICHE OFICIAL PRÁCTICA CONJUNTA EN BETSUBARA -->
+        <article class="event-photo-card" data-category="encuentros">
+          <div class="event-img-box" data-lightbox-src="assets/galeria/afiche-practica-conjunta.webp" data-lightbox-title="Convocatoria Oficial: Práctica Conjunta en Betsubara" data-lightbox-desc="Afiche conmemorativo de la Práctica Conjunta de Karate Do Shorin Ryu Shinshukan entre Hikari Dojo y Meiyo Dojo en Betsubara (Viernes 21:00 hs).">
+            <img src="assets/galeria/afiche-practica-conjunta.webp" alt="Afiche oficial Práctica Conjunta Hikari Dojo y Meiyo Dojo en Betsubara" loading="lazy" />
+            <span class="event-category-pill">📜 Afiche de Evento</span>
+            <button type="button" class="event-zoom-btn" aria-label="Ampliar imagen">🔍 Ver foto</button>
+          </div>
+          <div class="event-card-content">
+            <div class="event-meta-row">
+              <span>🏯 Castillo de Shuri • Okinawa</span>
+              <span>🕘 Viernes 21:00 hs</span>
+            </div>
+            <h3>Encuentros Especiales en Betsubara</h3>
+            <p>
+              Convocatorias periódicas a prácticas conjuntas y clases especiales de iniciación al <em>Kobudo</em> de Okinawa abiertas a los miembros de nuestra escuela.
+            </p>
+          </div>
+        </article>
+
+        <!-- 8. ESPÍRITU DARUMA (PRÁCTICA CONJUNTA) -->
+        <article class="event-photo-card" data-category="encuentros">
+          <div class="event-img-box" data-lightbox-src="assets/galeria/portada-centro-daruma.webp" data-lightbox-title="Espíritu Daruma — Práctica Conjunta" data-lightbox-desc="Nanakorobi Yaoki: 'Caer siete veces y levantarse ocho'. Filosofía de perseverancia en los encuentros conjuntos de Hikari Dojo y Meiyo Dojo.">
+            <img src="assets/galeria/portada-centro-daruma.webp" alt="Daruma tradicional japonés - Práctica Conjunta Hikari Dojo y Meiyo Dojo" loading="lazy" />
+            <span class="event-category-pill gold">🏮 Espíritu Budo</span>
+            <button type="button" class="event-zoom-btn" aria-label="Ampliar imagen">🔍 Ver foto</button>
+          </div>
+          <div class="event-card-content">
+            <div class="event-meta-row">
+              <span>🎋 Nanakorobi Yaoki</span>
+              <span>🇯🇵 Tradición Japonesa</span>
+            </div>
+            <h3>Filosofía Daruma: Perseverancia Inquebrantable</h3>
+            <p>
+              El proverbio japonés <em>"Siete veces caído, ocho veces levantado"</em> guía cada seminario, examen y entrenamiento compartido en nuestro dojo.
+            </p>
+          </div>
+        </article>
+
+        <!-- 9. CAMARADERÍA Y TERCER TIEMPO -->
+        <article class="event-photo-card" data-category="camaraderia">
+          <div class="event-img-box" data-lightbox-src="assets/galeria/camaraderia-cena.webp" data-lightbox-title="Camaradería & Familia Marcial en Villa Crespo" data-lightbox-desc="Cena de fraternidad compartida entre instructores y alumnos luego de la práctica conjunta en Betsubara Dojo.">
+            <img src="assets/galeria/camaraderia-cena.webp" alt="Cena de camaradería de Hikari Dojo y Meiyo Dojo en Villa Crespo" loading="lazy" />
+            <span class="event-category-pill">🍻 Familia Marcial</span>
+            <button type="button" class="event-zoom-btn" aria-label="Ampliar imagen">🔍 Ver foto</button>
+          </div>
+          <div class="event-card-content">
+            <div class="event-meta-row">
+              <span>🤝 Amistad y Respeto</span>
+              <span>📍 Villa Crespo, CABA</span>
+            </div>
+            <h3>Tercer Tiempo &amp; Comunidad Marcial</h3>
+            <p>
+              Más allá de la exigencia técnica en el tatami, celebramos cada encuentro especial compartiendo en familia con todos los integrantes del dojo.
+            </p>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- BANNER INFERIOR PARA CONSULTAR PRÓXIMOS EVENTOS POR WHATSAPP -->
+      <div class="events-cta-strip">
+        <div>
+          <strong>¿Querés sumarte a nuestras clases regulares o consultar por próximos seminarios y exámenes?</strong>
+          <span>Escribile directamente al <strong>Sensei Gustavo Talavera</strong> por WhatsApp para reservar tu lugar en <strong>Betsubara Dojo (Acoyte 1678, CABA)</strong>.</span>
+        </div>
+        <a href="https://wa.me/5491122636846?text=Hola%20Sensei%20Gustavo%20Talavera%2C%20vi%20la%20galer%C3%ADa%20de%20fotos%20y%20eventos%20de%20Karate%20Do%20-%20Shorin%20Ryu%20Shinshukan%20-%20Hikari%20Dojo%20y%20quisiera%20sumarme%20a%20entrenar." target="_blank" rel="noopener" class="btn-primary">
+          💬 Consultar al Sensei por WhatsApp
+        </a>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         5. SECCIÓN COMUNIDAD + ESPACIO BETSUBARA + CONTACTO WHATSAPP
+         ==================================================================== -->
+    <section class="section" id="comunidad">
+      <div class="section-header">
+        <div class="section-eyebrow">Comunidad &amp; Contacto Directo</div>
+        <h2 class="section-title">Karate Do - Shorin Ryu Shinshukan - Hikari Dojo</h2>
+        <p class="section-desc">
+          Comunicate directamente por WhatsApp con el <strong>Sensei Gustavo Talavera</strong> (<code>+54 9 11 2263-6846</code>) para consultar o reservar tu clase los Martes y Viernes de 21:00 a 22:30 hs.
+        </p>
+      </div>
+
+      <div class="ig-location-grid">
+        <!-- TARJETA DEL POST DE INSTAGRAM COMPLETO SIN RECORTES + BOTÓN WHATSAPP -->
+        <article class="ig-showcase-card">
+          <div class="ig-card-header">
+            <div class="ig-user-info">
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <img src="assets/logo-shinshukan.png" alt="Logo Shinshukan Argentina" style="width: 38px; height: 38px; border-radius: 50%; background: #fff; padding: 2px;" />
+                <img src="assets/logo-hikari.png" alt="Logo Hikari Dojo" style="width: 38px; height: 38px; border-radius: 50%; background: #fff; padding: 2px;" />
+              </div>
+              <div>
+                <a href="https://wa.me/5491122636846?text=Hola%20Sensei%20Gustavo%20Talavera%2C%20vi%20la%20web%20de%20Karate%20Do%20-%20Shorin%20Ryu%20Shinshukan%20-%20Hikari%20Dojo%20y%20quisiera%20hacer%20una%20consulta." target="_blank" rel="noopener" class="ig-handle">
+                  Sensei Gustavo Talavera
+                </a>
+                <span class="ig-location-tag">Karate Do - Shorin Ryu Shinshukan - Hikari Dojo</span>
+              </div>
+            </div>
+            <a href="https://wa.me/5491122636846?text=Hola%20Sensei%20Gustavo%20Talavera%2C%20quisiera%20consultar%20por%20las%20clases%20de%20Karate%20Do." target="_blank" rel="noopener" class="pill-badge">
+              WhatsApp ↗
+            </a>
+          </div>
+
+          <div class="ig-image-wrapper" style="aspect-ratio: 4 / 5; background: #fff;">
+            <img src="assets/ig-post.jpg" alt="Publicación oficial de Instagram de Karate Do - Shorin Ryu Shinshukan - Hikari Dojo" style="object-fit: contain;" />
+          </div>
+
+          <div class="ig-card-body">
+            <p class="ig-caption">
+              <strong>Karate Do - Shorin Ryu Shinshukan - Hikari Dojo</strong> 🇦🇷🥋🇯🇵 — Karate para adolescentes y adultos en el Espacio Betsubara. ¡Abierta la inscripción! Días: <strong>Martes y Viernes de 21:00 a 22:30 hs</strong>.
+            </p>
+            <div class="ig-tags">
+              <span>#karatedo</span>
+              <span>#shorinryu</span>
+              <span>#shinshukan</span>
+              <span>#hikaridojo</span>
+              <span>#betsubaradojo</span>
+              <span>#okinawakarate</span>
+              <span>#villacrespo</span>
+            </div>
+            <a href="https://wa.me/5491122636846?text=Hola%20Sensei%20Gustavo%20Talavera%2C%20quisiera%20más%20información%20sobre%20las%20clases%20en%20Hikari%20Dojo." target="_blank" rel="noopener" class="btn-secondary" style="width: 100%; justify-content: center;">
+              💬 Escribir a Sensei Gustavo Talavera (+54 9 11 2263-6846)
+            </a>
+          </div>
+        </article>
+
+        <!-- INFORMACIÓN DEL DOJO Y FORMULARIO DE CLASE DE PRUEBA VÍA WHATSAPP -->
+        <div class="dojo-info-stack">
+          <div class="glass-card">
+            <div class="panel-mini-title">Sede de Entrenamiento &amp; Ubicación</div>
+            <h3>Betsubara Dojo</h3>
+            <p>
+              Nuestro dojo cuenta con tatami profesional y un ambiente tradicional ideal para el aprendizaje seguro y enfocado de <strong>Karate Do - Shorin Ryu Shinshukan - Hikari Dojo</strong>.
+            </p>
+
+            <div class="info-feature-row" style="margin-bottom: 0.75rem;">
+              <div class="info-icon-box">🥋</div>
+              <div>
+                <h4>Instructor a Cargo</h4>
+                <p><strong>Sensei Gustavo Talavera</strong> — <a href="https://wa.me/5491122636846" target="_blank" rel="noopener" style="color: var(--cyan-pastel); font-weight: 700; text-decoration: none;">WhatsApp: +54 9 11 2263-6846</a></p>
+              </div>
+            </div>
+
+            <div class="info-feature-row" style="margin-bottom: 0.75rem;">
+              <div class="info-icon-box">📍</div>
+              <div>
+                <h4>Dirección — Betsubara Dojo</h4>
+                <p>
+                  <strong>Acoyte 1678</strong><br />
+                  Ciudad Autónoma de Buenos Aires, Ciudad Autónoma de Buenos Aires
+                </p>
+              </div>
+            </div>
+
+            <div class="info-feature-row">
+              <div class="info-icon-box">🕘</div>
+              <div>
+                <h4>Días y Horarios Fijos</h4>
+                <p><strong>Martes y Viernes de 21:00 a 22:30 hs</strong> (Adolescentes y Adultos)</p>
+              </div>
+            </div>
+
+            <!-- MAPA INTERACTIVO DE BETSUBARA DOJO (ACOYTE 1678, CABA) -->
+            <div class="dojo-map-box">
+              <iframe
+                class="dojo-map-iframe"
+                title="Mapa de ubicación de Betsubara Dojo - Acoyte 1678, Ciudad Autónoma de Buenos Aires"
+                src="https://www.google.com/maps?q=Acoyte+1678,+Ciudad+Aut%C3%B3noma+de+Buenos+Aires,+Argentina&amp;hl=es&amp;z=16&amp;output=embed"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                allowfullscreen>
+              </iframe>
+              <div class="dojo-map-footer">
+                <span>📍 <strong>Betsubara Dojo:</strong> Acoyte 1678, CABA</span>
+                <a href="https://www.google.com/maps/search/?api=1&amp;query=Acoyte+1678,+Ciudad+Autonoma+de+Buenos+Aires" target="_blank" rel="noopener" class="dojo-map-link">
+                  Abrir en Google Maps ↗
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <div class="panel-mini-title">Inscripción Abierta vía WhatsApp</div>
+            <h3>Coordiná tu Primera Clase con el Sensei</h3>
+            <p style="margin-bottom: 0.5rem;">
+              Completá tus datos para enviarle un mensaje directo de WhatsApp al <strong>Sensei Gustavo Talavera</strong>.
+            </p>
+
+            <form class="contact-form" id="trial-class-form">
+              <div>
+                <input type="text" id="input-nombre" class="form-input" placeholder="Tu nombre y apellido" required />
+              </div>
+              <div>
+                <select id="input-dia" class="form-input" aria-label="Elegir día de clase">
+                  <option value="Martes">Martes (21:00 a 22:30 hs)</option>
+                  <option value="Viernes">Viernes (21:00 a 22:30 hs)</option>
+                  <option value="Martes y Viernes">Martes y Viernes (21:00 a 22:30 hs)</option>
+                </select>
+              </div>
+              <div class="full-width">
+                <select id="input-nivel" class="form-input" aria-label="Nivel de experiencia">
+                  <option value="Principiante (Sin experiencia previa)">Principiante (Sin experiencia previa)</option>
+                  <option value="Con experiencia previa en Karate / Artes Marciales">Con experiencia previa en Karate / Artes Marciales</option>
+                </select>
+              </div>
+              <div class="full-width">
+                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">
+                  💬 Enviar Consulta por WhatsApp al Sensei Gustavo Talavera
+                </button>
+              </div>
+            </form>
+
+            <div id="form-feedback" style="display: none; margin-top: 1rem; padding: 0.9rem; border-radius: 10px; background: rgba(16, 185, 129, 0.14); border: 1px solid rgba(16, 185, 129, 0.4); color: #065f46; font-size: 0.84rem;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- VISOR LIGHTBOX DE FOTOS Y EVENTOS DEL DOJO -->
+  <div class="gallery-lightbox" id="gallery-lightbox" aria-hidden="true" role="dialog" aria-label="Visor de fotografías del Dojo">
+    <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+    <div class="lightbox-dialog">
+      <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Cerrar visor">✕</button>
+      <div class="lightbox-img-wrap">
+        <img src="" alt="" id="lightbox-img" />
+      </div>
+      <div class="lightbox-info">
+        <h3 id="lightbox-title">Karate Do - Shorin Ryu Shinshukan - Hikari Dojo</h3>
+        <p id="lightbox-desc"></p>
+        <a href="https://wa.me/5491122636846?text=Hola%20Sensei%20Gustavo%20Talavera%2C%20vi%20las%20fotos%20de%20Karate%20Do%20-%20Shorin%20Ryu%20Shinshukan%20-%20Hikari%20Dojo%20y%20quisiera%20sumarme%20a%20entrenar." target="_blank" rel="noopener" class="btn-primary" style="padding: 0.65rem 1.2rem; font-size: 0.82rem;">
+          💬 Consultar al Sensei Gustavo Talavera
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIE DE PÁGINA: SHINSHUKAN PRIMERO, HIKARI SEGUNDO (MISMO TAMAÑO) -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="brand">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <img src="assets/logo-shinshukan.png" alt="Logo Shinshukan Argentina" style="width: 42px; height: 42px; border-radius: 50%; background: #fff; padding: 2px;" />
+          <img src="assets/logo-hikari.png" alt="Logo Hikari Dojo" style="width: 42px; height: 42px; border-radius: 50%; background: #fff; padding: 2px;" />
+        </div>
+        <div class="brand-text" style="text-align: left;">
+          <span class="brand-name">KARATE DO - SHORIN RYU SHINSHUKAN - HIKARI DOJO</span>
+          <span class="brand-sub">Sensei Gustavo Talavera • Betsubara Dojo (Acoyte 1678, CABA)</span>
+        </div>
+      </div>
+      <div class="footer-copy">
+        Martes y Viernes de 21:00 a 22:30 hs • Betsubara Dojo — Acoyte 1678, Ciudad Autónoma de Buenos Aires • <a href="https://wa.me/5491122636846?text=Hola%20Sensei%20Gustavo%20Talavera%2C%20quisiera%20consultar%20por%20las%20clases%20de%20Karate%20Do%20-%20Shorin%20Ryu%20Shinshukan%20-%20Hikari%20Dojo." target="_blank" rel="noopener" style="color: var(--coral-pastel); font-weight: 700; text-decoration: none;">💬 WhatsApp: +54 9 11 2263-6846 (Sensei Gustavo Talavera)</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- THREE.JS + LOGOS OFICIALES EN BASE64 + ESCENA 3D -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="js/logos-data.js"></script>
+  <script src="js/dojo3d.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
