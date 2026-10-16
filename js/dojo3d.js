@@ -786,10 +786,16 @@
       this.mouse.y += (this.mouse.targetY - this.mouse.y) * 0.06;
 
       if (this.shinshukanEmblem && this.hikariEmblem) {
-        this.shinshukanEmblem.position.y = 3.55 + Math.sin(elapsed * 1.5) * 0.07;
+        // Suben con el scroll (salen del encuadre) + leve flotación
+        const t = this.scrollFraction;
+        const liftL = THREE.MathUtils.smoothstep(t, 0, 0.55) * 7.5;
+        const liftR = THREE.MathUtils.smoothstep(t, 0.05, 0.6) * 7.5;
+        const bobAmt = THREE.MathUtils.lerp(0.07, 0.02, t);
+
+        this.shinshukanEmblem.position.y = 3.55 + liftL + Math.sin(elapsed * 1.5) * bobAmt;
         this.shinshukanEmblem.rotation.y = 0.16 + Math.sin(elapsed * 0.8) * 0.12;
 
-        this.hikariEmblem.position.y = 3.55 + Math.cos(elapsed * 1.5) * 0.07;
+        this.hikariEmblem.position.y = 3.55 + liftR + Math.cos(elapsed * 1.5) * bobAmt;
         this.hikariEmblem.rotation.y = -0.16 + Math.cos(elapsed * 0.8) * 0.12;
       }
 

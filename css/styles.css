@@ -821,10 +821,6 @@ body.explore-mode main.content-wrapper * {
 .section-desc {
   color: var(--text-muted);
   font-size: 1rem;
-  background: rgba(255, 252, 246, 0.65);
-  padding: 0.55rem 0.85rem;
-  border-radius: 0;
-  backdrop-filter: blur(6px);
   text-align: center;
 }
 
@@ -1342,13 +1338,6 @@ body.explore-mode main.content-wrapper * {
   padding: 0 2.5rem;
 }
 
-.section-gallery .events-cta-strip {
-  max-width: 1280px;
-  margin-left: auto;
-  margin-right: auto;
-  width: calc(100% - 5rem);
-}
-
 .events-gallery-grid {
   display: flex;
   align-items: stretch;
@@ -1518,33 +1507,6 @@ body.explore-mode main.content-wrapper * {
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.events-cta-strip {
-  margin-top: 2rem;
-  background: #ffffff;
-  border: 1px solid var(--border-subtle);
-  border-radius: 0;
-  padding: 1.45rem 1.85rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1.25rem;
-  box-shadow: none;
-}
-
-.events-cta-strip strong {
-  display: block;
-  font-family: var(--font-display);
-  font-size: 1.08rem;
-  color: var(--text-dark);
-  margin-bottom: 0.2rem;
-}
-
-.events-cta-strip span {
-  font-size: 0.88rem;
-  color: var(--text-muted);
 }
 
 /* Modal Lightbox para ampliar fotos */
@@ -1737,9 +1699,6 @@ body.explore-mode main.content-wrapper * {
   .section-contact .ig-location-grid {
     padding-left: 1.35rem;
     padding-right: 1.35rem;
-  }
-  .section-gallery .events-cta-strip {
-    width: calc(100% - 2.7rem);
   }
   .events-gallery-grid {
     padding-left: 2rem;
